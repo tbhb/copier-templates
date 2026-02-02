@@ -1,0 +1,73 @@
+# Copier configuration for python-tool template
+# https://copier.readthedocs.io/
+
+_min_copier_version: "9.0.0"
+
+_subdirectory: .
+
+_exclude:
+  - copier.yaml
+  - "*.pyc"
+  - __pycache__
+  - .git
+
+_jinja_extensions:
+  - jinja2.ext.do
+  - jinja2.ext.loopcontrols
+
+# Template questions
+project_name:
+  type: str
+  help: Human-readable project name (e.g., "My Tool")
+
+project_slug:
+  type: str
+  help: Package/repo name (hyphenated, e.g., "my-tool")
+  default: "{{ project_name | lower | replace(' ', '-') | replace('_', '-') }}"
+
+project_module:
+  type: str
+  help: Python module name (underscores, e.g., "my_tool")
+  default: "{{ project_slug | replace('-', '_') }}"
+
+project_description:
+  type: str
+  help: One-line project description
+
+copyright_year:
+  type: str
+  help: Copyright year
+  default: "2026"
+
+python_version:
+  type: str
+  help: Minimum Python version
+  default: "3.13"
+  choices:
+    - "3.12"
+    - "3.13"
+
+include_docs:
+  type: bool
+  help: Include MkDocs documentation
+  default: true
+
+include_github_actions:
+  type: bool
+  help: Include CI/CD workflows
+  default: true
+
+include_cloudflare:
+  type: bool
+  help: Include Wrangler for Cloudflare Pages
+  default: true
+
+# Hardcoded personal info (not prompted)
+# author_name: Tony Burns
+# author_email: tony@tonyburns.net
+# github_username: tbhb
+# orcid: https://orcid.org/0009-0006-4480-2939
+
+_tasks:
+  - "git init"
+  - "git add ."

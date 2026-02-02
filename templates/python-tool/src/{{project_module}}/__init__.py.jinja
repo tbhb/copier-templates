@@ -1,0 +1,10 @@
+"""{{ project_name }}: {{ project_description }}"""
+
+from importlib import metadata
+
+__version__ = metadata.version("{{ project_slug }}")
+__all__ = ["__version__", "main"]
+
+
+def main() -> None:  # noqa: D103
+    print("Hello from {{ project_slug }}!")  # noqa: T201

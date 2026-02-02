@@ -1,0 +1,20 @@
+{%- if include_docs -%}
+{% raw %}{% extends "base.html" %}
+{% block announce %}
+    {% if config.extra.env != "latest" %}
+        <div class="admonition danger">
+            <p>
+                <strong>You are viewing a development version of {% endraw %}{{ project_slug }}{% raw %}'s documentation.</strong>
+                For the latest stable documentation, visit
+                <a href="https://{% endraw %}{{ project_slug }}{% raw %}.tbhb.dev">here</a>.
+            </p>
+        </div>
+    {% endif %}
+{% endblock %}
+{% block scripts %}
+    <!-- Add scripts that need to run before here -->
+    {{ super() }}
+    <!-- Add scripts that need to run afterwards here -->
+{% endblock %}
+{% endraw %}
+{%- endif %}

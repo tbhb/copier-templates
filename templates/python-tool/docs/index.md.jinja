@@ -1,0 +1,43 @@
+{%- if include_docs -%}
+# {{ project_name }}
+
+[![CI](https://github.com/tbhb/{{ project_slug }}/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tbhb/{{ project_slug }}/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/{{ project_slug }}.svg)](https://pypi.org/project/{{ project_slug }}/)
+[![codecov](https://codecov.io/gh/tbhb/{{ project_slug }}/branch/main/graph/badge.svg)](https://codecov.io/gh/tbhb/{{ project_slug }})
+[![Python {{ python_version }}+](https://img.shields.io/badge/python-{{ python_version }}+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
+{{ project_description }}
+
+!!! warning "Alpha software"
+
+    This project is in early development. Not yet recommended for use.
+
+<div class="grid cards" markdown>
+
+-   :material-school:{ .lg .middle } **Tutorials**
+
+    ---
+
+    [:octicons-arrow-right-24: Get started](tutorials/index.md)
+
+-   :material-directions:{ .lg .middle } **How-to guides**
+
+    ---
+
+    [:octicons-arrow-right-24: Find a guide](guides/index.md)
+
+-   :material-book-open-variant:{ .lg .middle } **Reference**
+
+    ---
+
+    [:octicons-arrow-right-24: Browse the reference](reference/index.md)
+
+-   :material-lightbulb-on:{ .lg .middle } **Explanation**
+
+    ---
+
+    [:octicons-arrow-right-24: Learn more](explanation/index.md)
+
+</div>
+{%- endif %}

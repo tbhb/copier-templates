@@ -1,0 +1,34 @@
+{%- if include_docs -%}
+# Installation
+
+{{ project_name }} requires Python {{ python_version }} or later.
+
+## Basic installation
+
+=== "pipx"
+
+    ```bash
+    pipx install {{ project_slug }}
+    ```
+
+=== "uv"
+
+    ```bash
+    uvx {{ project_slug }}
+    ```
+
+## Install from repository
+
+To install the latest development version directly from GitHub:
+
+=== "pipx"
+    ```bash
+    pipx install git+https://github.com/tbhb/{{ project_slug }}.git
+    ```
+
+=== "uv"
+
+    ```bash
+    uvx git+https://github.com/tbhb/{{ project_slug }}.git
+    ```
+{%- endif %}
