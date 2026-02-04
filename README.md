@@ -1,4 +1,4 @@
-# Copier Templates
+# copier-templates
 
 Personal project templates for [Copier](https://copier.readthedocs.io/).
 
@@ -34,7 +34,7 @@ copier copy gh:tbhb/copier-templates/templates/python-tool my-project
 | `project_module` | Python module name | Derived from slug |
 | `project_description` | One-line description | Required |
 | `copyright_year` | Copyright year | 2026 |
-| `python_version` | Minimum Python version | 3.13 (choices: 3.12, 3.13) |
+| `python_version` | Python version required | 3.13 (choices: 3.12, 3.13) |
 | `include_docs` | Include MkDocs | true |
 | `include_github_actions` | Include CI/CD | true |
 | `include_cloudflare` | Include Wrangler | true |

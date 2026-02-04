@@ -1,0 +1,84 @@
+[project]
+name = "copier-templates"
+version = "0.1.0"
+description = "Copier templates for bootstrapping Python projects"
+readme = "README.md"
+authors = [{ name = "Tony Burns", email = "tony@tonyburns.net" }]
+requires-python = ">=3.13"
+
+[dependency-groups]
+dev = [
+  "codespell>=2.4.1",
+  "copier>=9.7.1",
+  "prek>=0.2.23",
+  "ruff>=0.14.10",
+  "vale>=3.13.0.0",
+  "yamllint>=1.37.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/tbhb/copier-templates"
+Issues = "https://github.com/tbhb/copier-templates/issues"
+Repository = "https://github.com/tbhb/copier-templates"
+
+[tool.codespell]
+skip = "*.lock,node_modules,pnpm-lock.yaml,.vale,templates/**/docs/**"
+ignore-words-list = "AKS,CrossReference,Nd,Wont,WONT"
+
+[tool.ruff]
+extend-exclude = ["**/node_modules", "**/tmp", "templates/**"]
+force-exclude = true
+target-version = "py313"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+  "A",     # flake8-builtins
+  "ARG",   # flake8-unused-arguments
+  "ASYNC", # flake8-async
+  "B",     # bugbear
+  "BLE",   # flake8-blind-except
+  "C4",    # flake8-comprehensions
+  "D",     # pydocstyle
+  "DTZ",   # flake8-datetimez
+  "E",     # pycodestyle (error)
+  "EM",    # flake8-errmsg
+  "EXE",   # flake8-executable
+  "F",     # pyflakes
+  "FBT",   # flake8-boolean-trap
+  "FURB",  # refurb
+  "G",     # flake8-logging-format
+  "I",     # isort
+  "ICN",   # flake8-import-conventions
+  "ISC",   # flake8-implicit-str-concat
+  "LOG",   # flake8-logging
+  "N",     # pep8-naming
+  "PERF",  # Perflint
+  "PGH",   # pygrep-hooks
+  "PIE",   # flake8-pie
+  "PL",    # pylint
+  "PT",    # flake8-pytest-style
+  "PTH",   # flake8-use-pathlib
+  "PYI",   # flake8-pyi
+  "RET",   # flake8-return
+  "RUF",   # Ruff-specific rules
+  "S",     # flake8-bandit
+  "SIM",   # flake8-simplify
+  "SLF",   # flake8-self
+  "SLOT",  # flake8-slots
+  "TC",    # flake8-type-checking
+  "TD",    # flake8-todos
+  "TID",   # flake8-tidy-imports
+  "T10",   # flake8-debugger
+  "T20",   # flake8-print
+  "TRY",   # tryceratops
+  "UP",    # pyupgrade
+]
+ignore = ["TD003"]
+pydocstyle = { convention = "google" }
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+extra-standard-library = ["typing_extensions"]
