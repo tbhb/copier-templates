@@ -10,7 +10,8 @@
     "no-inline-html": false,
     "code-block-style": false,
     "link-fragments": false,
-    "list-marker-space": false
+    "list-marker-space": false,
+    "table-column-style": false
   },
   "customRules": [],
   "gitignore": true,
