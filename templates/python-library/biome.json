@@ -8,7 +8,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!docs/.overrides", "!wrangler.jsonc"]
+    "includes": ["**", "!docs/.overrides", "!wrangler.jsonc", "!**/*.html"]
   },
   "formatter": {
     "enabled": true,
