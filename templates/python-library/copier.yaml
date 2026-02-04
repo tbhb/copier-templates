@@ -1,4 +1,4 @@
-# Copier configuration for python-tool template
+# Copier configuration for python-library template
 # https://copier.readthedocs.io/
 
 _min_copier_version: "9.0.0"
@@ -39,13 +39,10 @@ copyright_year:
   help: Copyright year
   default: "2026"
 
-python_version:
+keywords:
   type: str
-  help: Minimum Python version
-  default: "3.13"
-  choices:
-    - "3.12"
-    - "3.13"
+  help: "Comma-separated keywords for PyPI (e.g., 'parsing, validation, utilities')"
+  default: ""
 
 include_docs:
   type: bool

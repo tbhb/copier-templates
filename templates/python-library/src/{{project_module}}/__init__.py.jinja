@@ -3,8 +3,8 @@
 from importlib import metadata
 
 __version__ = metadata.version("{{ project_slug }}")
-__all__ = ["__version__", "main"]
 
-
-def main() -> None:  # noqa: D103
-    print("Hello from {{ project_slug }}!")  # noqa: T201
+__all__ = [
+    "__version__",
+    # Add public API exports here as the library develops
+]

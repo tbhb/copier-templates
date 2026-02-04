@@ -1,0 +1,20 @@
+"""Benchmark tests for import time performance."""
+
+import importlib
+from typing import TYPE_CHECKING
+
+import pytest
+
+if TYPE_CHECKING:
+    from pytest_codspeed import BenchmarkFixture
+
+
+@pytest.mark.benchmark
+def test_import_time(benchmark: "BenchmarkFixture") -> None:
+    """Benchmark the import time of the main module."""
+    import {{ project_module }}  # noqa: PLC0415
+
+    def reload_module() -> None:
+        _ = importlib.reload({{ project_module }})
+
+    benchmark(reload_module)

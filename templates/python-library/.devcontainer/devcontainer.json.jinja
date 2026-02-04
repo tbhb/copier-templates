@@ -1,0 +1,117 @@
+// Development container configuration for {{ project_name }}
+// See https://containers.dev/implementors/json_reference/ for schema reference
+{
+  "name": "{{ project_name }}",
+
+  // ---------------------------------------------------------------------------
+  // Base image - tbhb Python + uv devcontainer
+  // ---------------------------------------------------------------------------
+  "image": "ghcr.io/tbhb/python:3.13",
+
+  // ---------------------------------------------------------------------------
+  // Features - official and community devcontainer features
+  // Base image already includes: Python, uv, zsh (no Oh My Zsh)
+  // ---------------------------------------------------------------------------
+  "features": {
+    // Official Microsoft feature
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24"
+    },
+    // Community feature (devcontainers-extra, well-maintained)
+    "ghcr.io/devcontainers-extra/features/pnpm:2": {
+      "version": "10"
+    },
+    // Community feature (devcontainers-extra) - cross-shell prompt
+    "ghcr.io/devcontainers-extra/features/starship:1": {},
+    // Official Anthropic feature - Claude Code CLI
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    // Official Microsoft feature - GitHub CLI
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Community feature (devcontainers-extra) - install hadolint from GitHub releases
+    "ghcr.io/devcontainers-extra/features/gh-release:1": {
+      "repo": "hadolint/hadolint",
+      "binaryNames": "hadolint",
+      "version": "2.12.0"
+    },
+    // Custom features from tbhb/devcontainer-features
+    "ghcr.io/tbhb/devcontainer-features/just:1": {
+      "version": "1.40.0"
+    },
+    "ghcr.io/tbhb/devcontainer-features/shellcheck:1": {},
+    "ghcr.io/tbhb/devcontainer-features/zsh-autosuggestions:1": {},
+    "ghcr.io/tbhb/devcontainer-features/zsh-syntax-highlighting:1": {}
+  },
+
+  // ---------------------------------------------------------------------------
+  // Container configuration
+  // ---------------------------------------------------------------------------
+  "containerUser": "vscode",
+  "workspaceFolder": "/workspaces/{{ project_slug }}",
+
+  // Persist home directory across container rebuilds, with exceptions for
+  // directories that should be fresh with each container build
+  "mounts": [
+    "source={{ project_slug }}-home-${devcontainerId},target=/home/vscode,type=volume",
+    // Separate node_modules for container (Linux binaries) vs host (macOS binaries)
+    "source={{ project_slug }}-node-modules-${devcontainerId},target=/workspaces/{{ project_slug }}/node_modules,type=volume",
+    // Separate .venv for container (Linux binaries) vs host (macOS binaries)
+    "source={{ project_slug }}-venv-${devcontainerId},target=/workspaces/{{ project_slug }}/.venv,type=volume",
+    // Bind mount host's Claude config for subscription auth
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind"
+  ],
+
+  // Environment variables available in the container
+  "containerEnv": {
+    "UV_LINK_MODE": "copy"
+  },
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle commands
+  // ---------------------------------------------------------------------------
+  // Set up shell configuration and install dependencies
+  "postCreateCommand": ".devcontainer/post-create.sh",
+
+  // ---------------------------------------------------------------------------
+  // Port forwarding
+  // ---------------------------------------------------------------------------
+  // Forward port 8000 for mkdocs development server (just dev-docs)
+  "forwardPorts": [8000],
+
+  // ---------------------------------------------------------------------------
+  // VS Code customizations
+  // ---------------------------------------------------------------------------
+  "customizations": {
+    "vscode": {
+      // Extensions to install in the container
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "detachhead.basedpyright",
+        "biomejs.biome"
+      ],
+
+      // VS Code settings for the container
+      "settings": {
+        // Python configuration
+        "python.defaultInterpreterPath": "/workspaces/{{ project_slug }}/.venv/bin/python",
+
+        // Ruff formatter configuration
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        },
+
+        // Biome formatter for JSON
+        "[json]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+        "[jsonc]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+
+        // basedpyright type checking
+        "basedpyright.analysis.typeCheckingMode": "strict"
+      }
+    }
+  }
+}
