@@ -7,8 +7,18 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false,
-    "includes": ["**", "!docs/.overrides", "!wrangler.jsonc", "!**/*.html"]
+    "ignoreUnknown": true,
+    "includes": [
+      "**/*.json",
+      "**/*.jsonc",
+      "**/*.js",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.ts",
+      "**/*.mts",
+      "**/*.cts",
+      "!wrangler.jsonc"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -31,14 +41,6 @@
       "source": {
         "organizeImports": "on"
       }
-    }
-  },
-  "html": {
-    "formatter": {
-      "enabled": false
-    },
-    "linter": {
-      "enabled": false
     }
   }
 }
