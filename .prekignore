@@ -1,0 +1,4 @@
+# Exclude template directories from prek workspace detection
+# Templates have their own pre-commit configs but no node_modules installed
+/templates/
+templates/**

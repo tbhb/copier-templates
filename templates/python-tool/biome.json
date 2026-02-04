@@ -35,10 +35,10 @@
   },
   "html": {
     "formatter": {
-      "indentWidth": 2
+      "enabled": false
     },
-    "parser": {
-      "interpolation": true
+    "linter": {
+      "enabled": false
     }
   }
 }
