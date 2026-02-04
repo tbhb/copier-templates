@@ -62,4 +62,6 @@ jobs:
 
       - name: Build docs
         working-directory: /tmp/test-project
+        env:
+          CI: "false"
         run: just build-docs
