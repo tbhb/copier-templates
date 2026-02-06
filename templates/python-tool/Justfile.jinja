@@ -104,9 +104,9 @@ lint-docs *args:
   just lint-markdown {{ args }}
   just lint-prose {{ args }}
 
-# Lint JSON files
+# Lint JSON/JS/TS files (excludes docs to avoid Biome HTML parser bug)
 lint-json:
-  {{pnpm}} biome check --files-ignore-unknown=true .
+  {{pnpm}} biome check --files-ignore-unknown=true . --ignore docs/.overrides
 
 # Lint Markdown files
 lint-markdown *args:
