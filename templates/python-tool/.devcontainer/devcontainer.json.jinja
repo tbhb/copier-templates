@@ -1,5 +1,5 @@
 // Development container configuration for {{ project_name }}
-// See https://containers.dev/implementors/json_reference/ for schema reference
+// See https://containers.dev/implementers/json_reference/ for schema reference
 {
   "name": "{{ project_name }}",
 
@@ -13,14 +13,6 @@
   // Base image already includes: Python, uv, zsh (no Oh My Zsh)
   // ---------------------------------------------------------------------------
   "features": {
-    // Official Microsoft feature
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
-    },
-    // Community feature (devcontainers-extra, well-maintained)
-    "ghcr.io/devcontainers-extra/features/pnpm:2": {
-      "version": "10"
-    },
     // Community feature (devcontainers-extra) - cross-shell prompt
     "ghcr.io/devcontainers-extra/features/starship:1": {},
     // Official Anthropic feature - Claude Code CLI
@@ -52,8 +44,6 @@
   // directories that should be fresh with each container build
   "mounts": [
     "source={{ project_slug }}-home-${devcontainerId},target=/home/vscode,type=volume",
-    // Separate node_modules for container (Linux binaries) vs host (macOS binaries)
-    "source={{ project_slug }}-node-modules-${devcontainerId},target=/workspaces/{{ project_slug }}/node_modules,type=volume",
     // Separate .venv for container (Linux binaries) vs host (macOS binaries)
     "source={{ project_slug }}-venv-${devcontainerId},target=/workspaces/{{ project_slug }}/.venv,type=volume",
     // Bind mount host's Claude config for subscription auth

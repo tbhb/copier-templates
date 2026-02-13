@@ -1,6 +1,5 @@
 {
-  "root": false,
-  "$schema": "node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["docs/.overrides/**"],
+    "ignore": [
+{%- if include_docs %}
+      "docs/.overrides/**",
+{%- endif %}
+{%- if include_cloudflare %}
+      "wrangler.jsonc",
+{%- endif %}
+    ],
     "includes": [
       "**/*.json",
       "**/*.jsonc",
@@ -17,8 +23,7 @@
       "**/*.cjs",
       "**/*.ts",
       "**/*.mts",
-      "**/*.cts",
-      "!wrangler.jsonc"
+      "**/*.cts"
     ]
   },
   "formatter": {

@@ -5,7 +5,6 @@ set positional-arguments
 project := "{{ project_slug }}"
 package := "{{ project_slug }}"
 module := "{{ project_module }}"
-pnpm := "pnpm exec"
 test_pypi_index := "https://test.pypi.org/legacy/"
 
 {% raw %}
@@ -59,11 +58,11 @@ clean-python:
 
 # Deploy latest documentation
 deploy-docs: build-docs
-  pnpm exec wrangler deploy --env ""
+  uv run --group docs workers-py deploy --env ""
 
 # Deploy documentation preview
 deploy-docs-pr number: (build-docs-pr number)
-  pnpm exec wrangler versions upload --env preview --preview-alias pr-{{number}}
+  uv run --group docs workers-py versions upload --env preview --preview-alias pr-{{number}}
 
 # Develop the documentation site locally
 dev-docs:
@@ -71,9 +70,9 @@ dev-docs:
 
 # Format code
 format:
-  codespell -w
+  uvx codespell -w
   ruff format .
-  {{pnpm}} biome format --write .
+  biome format --write .
 
 # Fix code issues
 fix:
@@ -106,11 +105,11 @@ lint-docs *args:
 
 # Lint JSON/JS/TS files
 lint-json:
-  {{pnpm}} biome check --files-ignore-unknown=true .
+  biome check --files-ignore-unknown=true .
 
 # Lint Markdown files
 lint-markdown *args:
-  {{pnpm}} markdownlint-cli2 {{ if args == "" { '"**/*.md"' } else { args } }}
+  uvx rumdl check {{ if args == "" { "." } else { args } }}
 
 # Lint Python code
 lint-python: lint-python-imports lint-python-style lint-python-types lint-python-complexity
@@ -121,7 +120,6 @@ lint-python-complexity *args:
 
 # Lint Python imports
 lint-python-imports:
-  lint-imports
   ruff check --select I .
 
 # Lint Python style
@@ -135,23 +133,18 @@ lint-python-types *args:
 
 # Lint prose in Markdown files
 lint-prose *args:
-  vale {{ if args == "" { "docs/**/*.md CODE_OF_CONDUCT.md CONTRIBUTING.md README.md SECURITY.md" } else { args } }}
+  uvx vale {{ if args == "" { "docs/**/*.md CODE_OF_CONDUCT.md CONTRIBUTING.md README.md SECURITY.md" } else { args } }}
 
 # Check spelling
 lint-spelling:
-  codespell
+  uvx codespell
 
 # Lint YAML files
 lint-yaml:
-  yamllint --strict .
+  uvx yamllint --strict .
 
-# Install all dependencies (Python + Node.js)
-install: install-node install-python
-
-# Install only Node.js dependencies
-install-node:
-  #!/usr/bin/env bash
-  pnpm install --frozen-lockfile
+# Install all dependencies
+install: install-python
 
 # Install only Python dependencies
 install-python:
@@ -160,15 +153,15 @@ install-python:
 
 # Run pre-commit hooks on changed files
 prek:
-  prek
+  uvx prek
 
 # Run pre-commit hooks on all files
 prek-all:
-  prek run --all-files
+  uvx prek run --all-files
 
 # Install pre-commit hooks
 prek-install:
-  prek install
+  uvx prek install
 
 # Publish to TestPyPI (requires OIDC token in CI or UV_PUBLISH_TOKEN)
 publish-testpypi:
@@ -181,10 +174,6 @@ publish-pypi:
 # Run command
 run *args:
   "$@"
-
-# Run Node.js
-run-node *args:
-  {{pnpm}} "$@"
 
 # Run Python
 run-python *args:
@@ -230,7 +219,7 @@ update-examples *args:
 
 # Sync Vale styles and dictionaries
 vale-sync:
-  vale sync
+  uvx vale sync
 
 # Show the current version
 [script]

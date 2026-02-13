@@ -67,8 +67,7 @@ include_cloudflare:
 
 _tasks:
   - "git init"
-  - "pnpm install --no-frozen-lockfile"
   - "uv sync --all-groups"
-  - "uv run vale sync"
-  - "uv run prek install"
+  - "uvx vale sync"
+  - "uvx prek install"
   - "git add ."

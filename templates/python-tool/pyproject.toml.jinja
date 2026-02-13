@@ -14,14 +14,12 @@ dependencies = []
 [dependency-groups]
 dev = [
   "basedpyright>=1.36.1",
-  "codespell>=2.4.1",
   "complexipy>=5.1.0; sys_platform != 'win32' or python_version < '3.14'",
   "cosmic-ray>=8.4.3; sys_platform != 'win32'",
   "dirty-equals>=0.11",
   "faker>=39.0.0",
   "hypothesis>=6.148.7",
   "import-linter>=2.9",
-  "prek>=0.2.23",
   "py-spy>=0.4.1",
   "pyfakefs>=6.0.0",
   "pytest>=9.0.2",
@@ -34,11 +32,15 @@ dev = [
   "rich>=14.2.0",
   "ruff>=0.14.10",
   "statistics>=1.0.3.5",
-  "vale>=3.13.0.0",
-  "yamllint>=1.37.1",
 ]
 {%- if include_docs %}
-docs = ["mkdocs-material>=9.7.1", "mkdocstrings[python]>=1.0.0"]
+docs = [
+  "mkdocs-material>=9.7.1",
+  "mkdocstrings[python]>=1.0.0",
+{%- if include_cloudflare %}
+  "workers-py>=0.1.0",
+{%- endif %}
+]
 {%- endif %}
 release = ["cyclonedx-bom>=7.2.1"]
 
@@ -55,14 +57,14 @@ Repository = "https://github.com/tbhb/{{ project_slug }}"
 [tool.basedpyright]
 exclude = ["**/node_modules", "**/tmp", "examples/**"]
 include = ["src", "tests"]
-pythonVersion = "3.10"
+pythonVersion = "{{ python_version }}"
 reportImplicitRelativeImport = "none"
 reportImportCycles = "error"
 allowedUntypedLibraries = ["pyfakefs", "pytest_codspeed", "unittest.mock"]
 strict = ["src", "tests"]
 
 [tool.codespell]
-skip = "coverage.xml,coverage.json,uv.lock,htmlcov,tmp,pnpm-lock.yaml,docs,site,dist,*.cdx.json"
+skip = "coverage.xml,coverage.json,uv.lock,htmlcov,tmp,docs,site,dist,*.cdx.json"
 ignore-words-list = "AKS,CrossReference,Nd,Wont,WONT"
 
 [tool.complexipy]
@@ -138,7 +140,7 @@ directory = "htmlcov"
 [tool.ruff]
 extend-exclude = ["**/node_modules", "**/scripts", "**/tmp", "**/examples"]
 force-exclude = true
-target-version = "py310"
+target-version = "py{{ python_version | replace('.', '') }}"
 
 [tool.ruff.format]
 docstring-code-format = true
