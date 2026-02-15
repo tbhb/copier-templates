@@ -1,0 +1,14 @@
+{%- if include_docs -%}
+---
+paths:
+  - "docs/decisions/**/*.md"
+---
+
+# Conventions for ADRs
+
+- Number ADRs sequentially with 4-digit prefixes (like `0001-architecture-principles.md`)
+- Use [MADR v3](https://adr.github.io/madr/) format, adapted for project Markdown conventions
+- Use dash (`-`) list markers (per rumdl MD004), not `*` as in upstream MADR
+- Include YAML frontmatter with `status` and `date` fields
+- Valid status values: `proposed`, `accepted`, `deprecated`, `superseded`
+{%- endif -%}

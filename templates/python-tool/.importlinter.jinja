@@ -1,0 +1,6 @@
+{%- if importlinter_config == "file" -%}
+[importlinter]
+root_packages =
+    {{ project_module }}
+include_external_packages = true
+{%- endif -%}

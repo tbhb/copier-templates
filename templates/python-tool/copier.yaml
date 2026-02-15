@@ -62,6 +62,14 @@ include_cloudflare:
   help: Include Wrangler for Cloudflare Pages
   default: true
 
+importlinter_config:
+  type: str
+  help: "Where to store import-linter configuration"
+  default: "pyproject"
+  choices:
+    pyproject: "In pyproject.toml [tool.importlinter]"
+    file: "In standalone .importlinter file"
+
 # Hardcoded personal info (not prompted)
 # author_name: Tony Burns
 # author_email: tony@tonyburns.net

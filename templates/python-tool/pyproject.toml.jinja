@@ -13,7 +13,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-  "basedpyright>=1.36.1",
+  "ty>=0.0.17",
   "complexipy>=5.1.0; sys_platform != 'win32' or python_version < '3.14'",
   "cosmic-ray>=8.4.3; sys_platform != 'win32'",
   "dirty-equals>=0.11",
@@ -54,14 +54,14 @@ Homepage = "https://{{ project_slug }}.tbhb.dev"
 Issues = "https://github.com/tbhb/{{ project_slug }}/issues"
 Repository = "https://github.com/tbhb/{{ project_slug }}"
 
-[tool.basedpyright]
-exclude = ["**/node_modules", "**/tmp", "examples/**"]
-include = ["src", "tests"]
-pythonVersion = "{{ python_version }}"
-reportImplicitRelativeImport = "none"
-reportImportCycles = "error"
-allowedUntypedLibraries = ["pyfakefs", "pytest_codspeed", "unittest.mock"]
-strict = ["src", "tests"]
+[tool.ty.environment]
+python-version = "{{ python_version }}"
+
+[tool.ty.rules]
+all = "error"
+
+[tool.ty.src]
+exclude = ["**/node_modules", "**/tmp"]
 
 [tool.codespell]
 skip = "coverage.xml,coverage.json,uv.lock,htmlcov,tmp,docs,site,dist,*.cdx.json"
@@ -81,9 +81,11 @@ exclude = []
 output-csv = false
 output-json = false
 
+{%- if importlinter_config == "pyproject" %}
 [tool.importlinter]
 root_package = "{{ project_module }}"
 include_external_packages = true
+{%- endif %}
 
 [tool.pytest]
 addopts = [
@@ -127,6 +129,7 @@ exclude_lines = [
   "@abstractmethod",
   "@abc.abstractmethod",
 ]
+fail_under = 100
 precision = 2
 show_missing = true
 skip_covered = false

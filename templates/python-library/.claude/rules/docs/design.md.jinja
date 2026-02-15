@@ -1,0 +1,21 @@
+{%- if include_docs -%}
+---
+paths:
+  - "docs/design/**/*.md"
+---
+
+# Conventions for design documents
+
+- Use descriptive filenames (like `context-assembly-pipeline.md`)
+- Include YAML frontmatter with `status` and `date` fields
+- Valid status values: `draft`, `review`, `accepted`, `superseded`
+
+## Frontmatter template
+
+```yaml
+---
+status: draft
+date: YYYY-MM-DD
+---
+```
+{%- endif -%}

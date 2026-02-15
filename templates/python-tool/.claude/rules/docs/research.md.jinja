@@ -1,0 +1,13 @@
+{%- if include_docs -%}
+---
+paths:
+  - "docs/research/**/*.md"
+---
+
+# Conventions for research documents
+
+- Name files with the pattern `YYYYMMDD-underscored_name.md` (like `20260214-container_runtimes.md`)
+- The date prefix signals when the research took place and sorts files chronologically
+- Do not update research documents after initial publication other than linting fixes; create new research if conditions change
+- Reference research documents from ADRs and design documents when they inform decisions
+{%- endif -%}

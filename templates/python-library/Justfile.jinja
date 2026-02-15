@@ -69,23 +69,23 @@ dev-docs:
   uv run --isolated --group docs mkdocs serve --livereload --dev-addr 127.0.0.1:8000
 
 # Format code
-format:
-  uvx codespell -w
-  ruff format .
+format *args:
+  uvx codespell -w {{ if args == "" { "." } else { args } }}
+  ruff format {{ if args == "" { "." } else { args } }}
   biome format --write .
 
 # Fix code issues
-fix:
-  ruff format .
-  ruff check --fix .
+fix *args:
+  ruff format {{ if args == "" { "." } else { args } }}
+  ruff check --fix {{ if args == "" { "." } else { args } }}
   biome format --write .
   biome check --write .
 
 # Fix code issues including unsafe fixes
-fix-unsafe:
-  ruff format .
-  ruff check --fix --unsafe-fixes .
-  biome check --write --unsafe
+fix-unsafe *args:
+  ruff format {{ if args == "" { "." } else { args } }}
+  ruff check --fix --unsafe-fixes {{ if args == "" { "." } else { args } }}
+  biome check --write --unsafe .
 
 # Run all linters
 lint: lint-python lint-docs lint-config lint-shell lint-spelling
@@ -112,7 +112,7 @@ lint-markdown *args:
   uvx rumdl check {{ if args == "" { "." } else { args } }}
 
 # Lint Python code
-lint-python: lint-python-imports lint-python-style lint-python-types lint-python-complexity
+lint-python *args: (lint-python-style args) (lint-python-types args) (lint-python-complexity args) lint-python-imports
 
 # Lint Python complexity
 lint-python-complexity *args:
@@ -124,13 +124,13 @@ lint-python-imports:
   ruff check --select I .
 
 # Lint Python style
-lint-python-style:
-  ruff check .
-  ruff format --check .
+lint-python-style *args:
+  ruff check {{ if args == "" { "." } else { args } }}
+  ruff format --check {{ if args == "" { "." } else { args } }}
 
 # Check types
 lint-python-types *args:
-  basedpyright "$@"
+  ty check "$@"
 
 # Lint prose in Markdown files
 lint-prose *args:
@@ -201,7 +201,7 @@ test-all *args:
 
 # Run tests with coverage
 test-coverage *args:
-  pytest -m "not benchmark" --cov={{module}} --cov-branch --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=json "$@"
+  pytest -m "not benchmark" --cov={{module}} --cov-branch --cov-fail-under=100 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=json "$@"
 
 # RUn documentation tests
 test-examples *args:

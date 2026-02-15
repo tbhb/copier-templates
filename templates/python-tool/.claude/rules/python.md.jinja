@@ -1,0 +1,206 @@
+---
+paths:
+  - "**/*.py"
+---
+
+# Python rules
+
+All code targets Python {{ python_version }} and must pass `ruff check`, `ruff format`, and `complexipy` with zero warnings.
+
+**Fixing lint issues:** always run `just fix` (`ruff format` + `ruff check --fix`) before attempting to manually fix any Ruff findings. Many issues are auto-fixable.
+
+**Just recipes:**
+
+| Recipe | What it runs |
+|---|---|
+| `just lint-python [files]` | All Python linting (style + types + complexity + imports) |
+| `just lint-python-style [files]` | `ruff check` + `ruff format --check` |
+| `just lint-python-types [files]` | `ty check` |
+| `just lint-python-complexity [files]` | `complexipy` |
+| `just fix [files]` | `ruff format` + `ruff check --fix` |
+| `just fix-unsafe [files]` | `ruff format` + `ruff check --fix --unsafe-fixes` |
+| `just format [files]` | `codespell -w` + `ruff format` |
+| `just lint-python-imports` | `lint-imports` (architectural boundary contracts) |
+
+All recipes default to `.` (whole project) when called without file arguments.
+
+**No unilateral suppressions:** never add file-level or global suppressions (`noqa`, `type: ignore`, config-level `ignore`/`exclude`) for ruff, ty, complexipy, or import-linter without asking the user first. Inline suppressions on a specific line are acceptable when justified. Suppression comment formats:
+
+- **ruff:** `# noqa: RULE_CODE` like `# noqa: S101`. Comma-separate codes: `# noqa: S101, S102`.
+- **ty:** `# ty: ignore[rule-name]` like `# ty: ignore[possibly-unbound]`. Comma-separate rules: `# ty: ignore[rule-a, rule-b]`.
+- **complexipy:** no inline suppression support. Reduce complexity by extracting helpers, or use the `--exclude` CLI flag.
+- **import-linter:** no inline suppression. Allowed exceptions go in `ignore_imports` in `pyproject.toml` contracts.
+
+**Running commands:** always use `uv run` to invoke Python and all package CLIs (`uv run python`, `uv run ruff`, `uv run pytest`). Never invoke `python`, `python3`, or package CLIs directly.
+
+## Imports
+
+- Sort imports with isort (`I`). Group order: stdlib, third-party, first-party, tests (forced-separate). Combine `from x import a, b` into single statements.
+- `typing_extensions` counts as stdlib in import sorting.
+- Remove all unused imports (`F401`). Do not leave commented-out imports.
+- Use conventional aliases for common libraries (`ICN`): `import numpy as np`, `import pandas as pd`, etc.
+- No relative imports from parent packages (`TID`). Use absolute imports.
+- Move imports used only in type annotations into an `if TYPE_CHECKING:` block (`TC`). Use string-quoted annotations so runtime does not need the import. Never use `from __future__ import annotations`.
+
+## Architectural boundaries
+
+- Domain code must never import infrastructure modules. Infrastructure depends on domain (through Protocol interfaces), not the reverse.
+- import-linter enforces these boundaries mechanically via contracts in the import-linter configuration.
+- When creating new modules, check that imports respect the layering defined in import-linter contracts.
+- Run `just lint-python-imports` to verify. Fix violations in code; do not suppress them.
+
+## Naming
+
+- `snake_case` for functions, methods, and variables. `PascalCase` for classes. `UPPER_SNAKE_CASE` for module-level constants (`N`).
+- Never shadow Python built-in names (`A`): do not name variables `id`, `type`, `list`, `dict`, `input`, `format`, `hash`, `map`, `filter`, `set`, `str`, `int`, `dir`, `max`, `min`, `sum`, `any`, `all`, `next`, `open`, `range`, `round`, `vars`, `super`, etc.
+
+## Docstrings
+
+- Google convention (`D`). All public modules, classes, and functions require docstrings.
+- First line is a summary ending with a period. Use `Args:`, `Returns:`, `Raises:`, `Yields:` sections.
+- No blank line between summary and description in single-section docstrings.
+- Tests (`**/tests/**`) **must not** have docstrings on modules, classes, test functions, or test methods. Names must be self-describing. Only shared helper functions in test files may have docstrings.
+
+## Functions and arguments
+
+- **No mutable default arguments** (`B006`). Use `None` and assign inside the function body:
+
+  ```python
+  # Wrong
+  def f(items: list[str] = []):
+
+  # Right
+  def f(items: list[str] | None = None):
+      items = items if items is not None else []
+  ```
+
+- **No boolean positional parameters** (`FBT`). Boolean arguments must be keyword-only:
+
+  ```python
+  # Wrong
+  def process(data, verbose):
+
+  # Right
+  def process(data, *, verbose: bool = False):
+  ```
+
+- Remove unused function arguments (`ARG`). Variadic names (`*args`, `**kwargs`) are exempt.
+- Simplify return statements (`RET`): no unnecessary `else` after `return`; no assigning a variable only to immediately return it.
+
+## Error handling
+
+- **Never put string literals directly in exception constructors** (`EM`). Assign the message to a variable first:
+
+  ```python
+  # Wrong
+  raise ValueError("something went wrong")
+
+  # Right
+  msg = "something went wrong"
+  raise ValueError(msg)
+  ```
+
+- **Never use f-strings in exception constructors** (`EM102`). Same pattern: assign the f-string to a variable first.
+- No bare `except:` or `except Exception:` that swallows all errors (`BLE`). Catch specific exceptions.
+- Prefer `raise ... from err` to preserve exception chains (`B904`, `TRY200`).
+- Do not write `try`/`except`/`pass` (`TRY`). Handle or explicitly suppress with a comment.
+- Keep `try` blocks minimal. Do not stuff unrelated code inside `try` (`TRY301`).
+
+## Security
+
+- No `assert` for runtime validation (`S101`) because Python strips assertions in optimized mode. Tests (`**/tests/**`) are exempt.
+- No hardcoded passwords, tokens, or secrets (`S105`, `S106`).
+- No `eval()`, `exec()`, or `__import__()` (`S307`, `S102`).
+- Prefer `secrets` module over `random` for anything security-related (`S311`).
+- No `subprocess` calls with `shell=True` (`S602`).
+
+## Logging and output
+
+- **No `print()` statements** (`T20`). Use `logging` or structured logging.
+- **No `breakpoint()` or `pdb`** (`T10`). Remove all debugger calls before committing.
+- Use `%`-style formatting or extra kwargs in logging calls, not f-strings or `.format()` (`G`):
+
+  ```python
+  # Wrong
+  logger.info(f"Processing {item}")
+
+  # Right
+  logger.info("Processing %s", item)
+  ```
+
+- Instantiate loggers with `logging.getLogger(__name__)`, not `logging.getLogger()` (`LOG`).
+
+## Datetime
+
+- **Never use naive datetimes** (`DTZ`). Always provide a timezone:
+
+  ```python
+  # Wrong
+  datetime.datetime.now()
+  datetime.datetime.utcnow()
+
+  # Right
+  datetime.datetime.now(tz=datetime.UTC)
+  ```
+
+- Prefer `datetime.UTC` over `timezone.utc` (Python 3.11+).
+
+## Paths
+
+- Use `pathlib.Path` instead of `os.path` functions (`PTH`): `Path.exists()`, `Path.open()`, `Path.read_text()`, `Path.mkdir()`, etc.
+
+## Async
+
+- No blocking calls (`open()`, `sleep()`, `subprocess`) inside `async` functions (`ASYNC`). Use `anyio.Path`, `anyio.open_file()`, `anyio.wrap_file()` `asyncio.sleep()`, `anyio.run_process()`, etc.
+
+## Modernization and style
+
+- Use modern Python syntax (`UP`): `X | Y` union types (not `Union`/`Optional`), built-in generics (`list[str]` not `List[str]`), native `StrEnum`.
+- Prefer comprehensions over `map()`/`filter()` with lambdas (`C4`). Do not unnecessarily wrap in `list()` or `dict()`.
+- Simplify boolean expressions and control flow (`SIM`): use ternary where clearer, `not in` instead of `not x in`, `contextlib.suppress` for simple exception suppression.
+- Use itertools / built-in patterns over manual loops where clearer (`PERF`, `FURB`).
+- No unnecessary `pass`, `...`, or `object` inheritance (`PIE`).
+
+## Type annotations
+
+- Stub files (`.pyi`) follow flake8-pyi rules (`PYI`).
+- Classes with `__slots__` must define them properly (`SLOT`).
+- Imports for type annotations go in `TYPE_CHECKING` blocks (`TC`). Use quoted annotations (configured in `ruff.lint.flake8-type-checking`).
+
+## Testing
+
+- Use `@pytest.fixture`, not setup/teardown methods (`PT`).
+- Parametrize with `@pytest.mark.parametrize`, not loops.
+- Use `pytest.raises(ExcType, match=...)` and always include `match`.
+- Tests may use `assert` statements (the linter ignores S101 in `**/tests/**`).
+- Do not add docstrings to test files (see the Docstrings section).
+
+## Test filesystem isolation
+
+- **Unit tests must not use `tmp_path` or `tmp_dir`.** Unit tests must use [pyfakefs](https://pytest-pyfakefs.readthedocs.io/) (`fs` fixture) for all filesystem operations. Real temporary directories (`tmp_path`, `tmp_dir`, `tmp_path_factory`) are only permitted in integration tests (`@pytest.mark.integration`).
+- pyfakefs patches `pathlib`, `os`, `io.open`, and `builtins.open` automatically, so no special imports apply. Use the `fs` fixture provided by pyfakefs.
+- To pre-populate a fake filesystem, call `fs.create_file()` / `fs.create_dir()` in the test body or in a fixture that depends on `fs`.
+
+## Testing philosophy
+
+- **Never test language or runtime behavior.** Do not write tests that merely verify a frozen dataclass rejects mutation, a class inherits from another class, a Protocol has certain methods, or other Python guarantees. Test your own logic, not Python's.
+
+## Test coverage
+
+- **100% branch coverage is mandatory.** Every new or modified module must achieve 100% branch coverage. Run `just test-coverage` to verify; it fails if total coverage drops below 100%.
+- Both `pyproject.toml` (`fail_under = 100`) and the `test-coverage` Just recipe (`--cov-fail-under=100`) enforce branch coverage.
+- Use `# pragma: no cover` only for lines that genuinely cannot run (abstract methods, `TYPE_CHECKING` blocks, `__repr__`, defensive `raise NotImplementedError`). Never use it to hide untested logic.
+- When adding new code, write tests that exercise every branch before marking the task complete.
+
+## Complexity
+
+- Max cognitive complexity per function: **10** (enforced by complexipy). Break complex functions into smaller, well-named helpers.
+
+## Miscellaneous
+
+- No implicit string concatenation across lines (`ISC`). Use explicit `+` or parenthesized strings.
+- No access to private members of other classes (`SLF`).
+- Use specific `type: ignore[code]` comments, never bare `type: ignore` (`PGH`).
+- TODOs must include an author or issue reference (`TD`), like `# TODO(username): description`. Linking to an issue is not required (the linter ignores TD003).
+- No unnecessary Pylint disables or redundant code (`PL`).
+- Files with a shebang must be executable, and vice-versa (`EXE`).
