@@ -113,7 +113,7 @@ vale-sync:
 # ------------------------------------------------------------------------------
 
 # Test all templates
-test-templates: (test-template "python-tool") (test-template "python-library")
+test-templates: (test-template "python-tool") (test-template "python-library") (test-template "python-monorepo") (test-template "base")
 
 # Test a specific template
 [script]
@@ -134,6 +134,6 @@ test-template template:
   cd "$TEMP_DIR/test-project"
   just install
   just lint
-  just test
-  CI=false just build-docs
+  just --summary | grep -qw test && just test || echo "Skipping test (no recipe)"
+  just --summary | grep -qw build-docs && CI=false just build-docs || echo "Skipping build-docs (no recipe)"
   echo "Template {{template}} passed all tests!"

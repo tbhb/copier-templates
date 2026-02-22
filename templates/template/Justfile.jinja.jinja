@@ -1,0 +1,71 @@
+{% raw %}set shell := ['bash', '-euxo', 'pipefail', '-c']
+set unstable
+set positional-arguments
+
+project := "{{ project_slug }}"
+
+{% endraw %}{{ "{% raw %}" }}
+{% raw %}# List available recipes
+default:
+  @just --list
+
+# Format code
+format *args:
+  uvx codespell -w {{ if args == "" { "." } else { args } }}
+  biome format --write .
+
+# Fix code issues
+fix:
+  biome check --write .
+
+# Run all linters
+lint: lint-docs lint-config lint-spelling
+
+# Lint configuration files
+lint-config: lint-json lint-yaml
+
+# Lint documentation
+lint-docs *args:
+  just lint-markdown {{ args }}
+  just lint-prose {{ args }}
+
+# Lint JSON/JS/TS files
+lint-json:
+  biome check --files-ignore-unknown=true .
+
+# Lint Markdown files
+lint-markdown *args:
+  uvx rumdl check {{ if args == "" { "." } else { args } }}
+
+# Lint prose in Markdown files
+lint-prose *args:
+  uvx vale {{ if args == "" { "README.md" } else { args } }}
+
+# Check spelling
+lint-spelling:
+  uvx codespell
+
+# Lint YAML files
+lint-yaml:
+  yamllint --strict .
+
+# Install dependencies
+install:
+  uvx vale sync
+
+# Run pre-commit hooks on changed files
+prek:
+  uvx prek
+
+# Run pre-commit hooks on all files
+prek-all:
+  uvx prek run --all-files
+
+# Install pre-commit hooks
+prek-install:
+  uvx prek install
+
+# Sync Vale styles and dictionaries
+vale-sync:
+  uvx vale sync
+{% endraw %}{{ "{% endraw %}" }}
