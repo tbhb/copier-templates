@@ -31,6 +31,6 @@ project_description:
 
 _tasks:
   - "git init"
-  - "uvx vale sync"
-  - "uvx prek install"
+  - "vale sync"
+  - "prek install"
   - "git add ."

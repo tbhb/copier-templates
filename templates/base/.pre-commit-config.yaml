@@ -1,5 +1,5 @@
 ---
-default_stages: [pre-commit, pre-push]
+default_stages: [commit-msg, pre-commit, pre-push]
 
 repos:
   - repo: builtin
@@ -31,6 +31,10 @@ repos:
     rev: 27593b0e0e7eb8f0c2b7fae0d93fa1cfaabceb2f # v3.13.0
     hooks:
       - id: vale
+      - id: vale
+        name: vale (commit message)
+        stages: [commit-msg]
+        args: [--ext=.md]
 
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: f82d34de69ae7ddb36af40383c18d81d042fa3b1 # v0.0.222
@@ -40,9 +44,15 @@ repos:
 
   - repo: local
     hooks:
-      - id: local-biome-check
+      - id: biome-check
         name: biome check
         entry: biome check --write --files-ignore-unknown=true --no-errors-on-unmatched
         language: system
         types: [text]
         files: "\\.(jsx?|tsx?|c(js|ts)|m(js|ts)|d\\.(ts|cts|mts)|jsonc?|css|svelte|vue|astro|graphql|gql)$"
+      - id: cog-verify
+        name: conventional commits
+        entry: cog verify --file
+        language: system
+        stages: [commit-msg]
+        always_run: true
