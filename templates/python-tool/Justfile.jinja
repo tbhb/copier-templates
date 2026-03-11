@@ -69,19 +69,49 @@ dev-docs:
   uv run --isolated --group docs mkdocs serve --livereload --dev-addr 127.0.0.1:8000
 
 # Format code
-format *args:
-  uvx codespell -w {{ if args == "" { "." } else { args } }}
-  ruff format {{ if args == "" { "." } else { args } }}
+format: format-spelling format-python format-config format-docs
+
+# Format configuration files
+format-config:
   biome format --write .
+
+# Format documentation
+format-docs *args:
+  just format-markdown {{ args }}
+
+# Format Markdown files
+format-markdown *args:
+  uvx rumdl fmt {{ if args == "" { "." } else { args } }}
+
+# Format Python code
+format-python *args:
+  ruff format {{ if args == "" { "." } else { args } }}
+
+# Fix spelling
+format-spelling *args:
+  uvx codespell -w {{ if args == "" { "." } else { args } }}
 
 # Fix code issues
-fix *args:
-  ruff format {{ if args == "" { "." } else { args } }}
-  ruff check --fix {{ if args == "" { "." } else { args } }}
-  biome format --write .
+fix: fix-python fix-config fix-docs
+
+# Fix configuration files
+fix-config:
   biome check --write .
 
-# Fix code issues including unsafe fixes
+# Fix documentation
+fix-docs *args:
+  just fix-markdown {{ args }}
+
+# Fix Markdown files
+fix-markdown *args:
+  uvx rumdl check --fix {{ if args == "" { "." } else { args } }}
+
+# Fix Python code
+fix-python *args:
+  ruff format {{ if args == "" { "." } else { args } }}
+  ruff check --fix {{ if args == "" { "." } else { args } }}
+
+# Fix Python code including unsafe fixes
 fix-unsafe *args:
   ruff format {{ if args == "" { "." } else { args } }}
   ruff check --fix --unsafe-fixes {{ if args == "" { "." } else { args } }}

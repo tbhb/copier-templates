@@ -69,23 +69,44 @@ dev-docs:
   uv run --isolated --group docs mkdocs serve --livereload --dev-addr 127.0.0.1:8000
 
 # Format code
-format *args:
-  uvx codespell -w {{ if args == "" { "." } else { args } }}
+format: format-spelling format-python format-docs
+
+# Format documentation
+format-docs *args:
+  just format-markdown {{ args }}
+
+# Format Markdown files
+format-markdown *args:
+  uvx rumdl fmt {{ if args == "" { "." } else { args } }}
+
+# Format Python code
+format-python *args:
   ruff format {{ if args == "" { "." } else { args } }}
-  biome format --write .
+
+# Fix spelling
+format-spelling *args:
+  uvx codespell -w {{ if args == "" { "." } else { args } }}
 
 # Fix code issues
-fix *args:
+fix: fix-python fix-docs
+
+# Fix documentation
+fix-docs *args:
+  just fix-markdown {{ args }}
+
+# Fix Markdown files
+fix-markdown *args:
+  uvx rumdl check --fix {{ if args == "" { "." } else { args } }}
+
+# Fix Python code
+fix-python *args:
   ruff format {{ if args == "" { "." } else { args } }}
   ruff check --fix {{ if args == "" { "." } else { args } }}
-  biome format --write .
-  biome check --write .
 
-# Fix code issues including unsafe fixes
+# Fix Python code including unsafe fixes
 fix-unsafe *args:
   ruff format {{ if args == "" { "." } else { args } }}
   ruff check --fix --unsafe-fixes {{ if args == "" { "." } else { args } }}
-  biome check --write --unsafe .
 
 # Run all linters
 lint: lint-python lint-docs lint-config lint-shell lint-spelling
