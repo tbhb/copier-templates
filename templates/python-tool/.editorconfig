@@ -10,22 +10,18 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Go files
-[*.go]
-indent_style = tab
-
-# HTML and Jinja2 templates
-[*.{html,j2}]
+# Python
+[*.py]
 indent_style = space
-indent_size = 2
-
-# CSS and preprocessor files
-[*.css]
-indent_style = space
-indent_size = 2
+indent_size = 4
 
 # JavaScript and TypeScript
 [*.{js,ts}]
+indent_style = space
+indent_size = 2
+
+# CSS
+[*.css]
 indent_style = space
 indent_size = 2
 

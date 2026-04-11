@@ -17,9 +17,8 @@ All code targets Python {{ python_version }} and must pass `ruff check`, `ruff f
 | `just lint-python-style [files]` | `ruff check` + `ruff format --check` |
 | `just lint-python-types [files]` | `ty check` |
 | `just lint-python-complexity [files]` | `complexipy` |
-| `just fix [files]` | `ruff format` + `ruff check --fix` |
-| `just fix-unsafe [files]` | `ruff format` + `ruff check --fix --unsafe-fixes` |
-| `just format [files]` | `codespell -w` + `ruff format` |
+| `just fix [files]` | `ruff check --fix` |
+| `just format [files]` | `ruff format` + `biome format` + `rumdl fmt` |
 | `just lint-python-imports` | `lint-imports` (architectural boundary contracts) |
 
 All recipes default to `.` (whole project) when called without file arguments.

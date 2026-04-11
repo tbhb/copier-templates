@@ -15,5 +15,11 @@ style = "dash"
 [MD025]
 front_matter_title = ""
 
+[MD046]
+style = "fenced"
+
 [MD048]
 style = "backtick"
+
+[per-file-flavor]
+"**/*.mdx" = "mdx"

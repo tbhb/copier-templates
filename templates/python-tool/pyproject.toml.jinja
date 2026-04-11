@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.9.11,<0.10.0"]
+requires = ["uv_build>=0.9.11,<0.12.0"]
 build-backend = "uv_build"
 
 [project]
@@ -63,10 +63,6 @@ all = "error"
 [tool.ty.src]
 exclude = ["**/node_modules", "**/tmp"]
 
-[tool.codespell]
-skip = "coverage.xml,coverage.json,uv.lock,htmlcov,tmp,docs,site,dist,*.cdx.json"
-ignore-words-list = "AKS,CrossReference,Nd,Wont,WONT"
-
 [tool.complexipy]
 paths = ["src", "tests"]
 max-complexity-allowed = 10
@@ -93,7 +89,7 @@ addopts = [
   "--tb",
   "short",
   "-m",
-  "not benchmark and not slow",
+  "not benchmark and not slow and not property",
 ]
 pythonpath = ["src", "."]
 filterwarnings = ["error"]
@@ -121,7 +117,6 @@ relative_files = true
 [tool.coverage.report]
 exclude_lines = [
   "pragma: no cover",
-  "def __repr__",
   "raise AssertionError",
   "raise NotImplementedError",
   "if __name__ == .__main__.:",
@@ -207,6 +202,7 @@ ignore-variadic-names = true
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = [
-  "D",    # docstrings in tests
-  "S101", # assert statements in tests
+  "D",      # docstrings in tests
+  "PLR2004", # magic values in tests
+  "S101",   # assert statements in tests
 ]

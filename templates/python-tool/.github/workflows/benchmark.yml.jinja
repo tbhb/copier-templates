@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # CI tests only (not slow) for fast PR feedback
+          # CI micro-benchmarks (not slow) for fast PR feedback
           - shard: "import"
             filter: "test_import_time"
             marker: "benchmark and not slow"
@@ -50,13 +50,13 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@803947b9bd8e9f986429fa0c5a41c367cd732b41 # v7.2.1
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           python-version: "{{ python_version }}"
           enable-cache: true
 
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@4880d8d5247eadb92b8b18ec7f0b72a44484bffc # v4.10.4
+        uses: CodSpeedHQ/action@d872884a306dd4853acf0f584f4b706cf0cc72a2 # v4.13.0
         with:
           mode: simulation
           run: uv run pytest -m "{% raw %}${{ matrix.marker || 'benchmark' }}{% endraw %}" -k "{% raw %}${{ matrix.filter }}{% endraw %}" --codspeed
