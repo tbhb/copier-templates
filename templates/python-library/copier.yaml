@@ -76,6 +76,6 @@ importlinter_config:
 _tasks:
   - "git init"
   - "uv sync --all-groups"
-  - "uvx vale sync"
-  - "uvx prek install"
+  - "vale sync"
+  - "prek install -t commit-msg -t pre-commit"
   - "git add ."

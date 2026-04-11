@@ -1,47 +1,52 @@
-set shell := ['bash', '-euxo', 'pipefail', '-c']
-set unstable
-set positional-arguments
+set unstable := true
+set positional-arguments := true
 
-project := "{{ project_slug }}"
+# Default recipe
+default: check
 
-{% raw %}
-# List available recipes
-default:
-  @just --list
+# --- Setup ---
+
+# Set up development environment
+setup: prek-install vale-sync
+
+# Set up a worktree
+setup-worktree: vale-sync
+
+# --- Format ---
 
 # Format code
-format: format-spelling format-config format-docs
+format: format-config format-docs
 
 # Format configuration files
-format-config:
-  biome format --write .
+format-config *args:
+    biome format --write {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Format documentation
 format-docs *args:
-  just format-markdown {{ args }}
+    just format-markdown {% raw %}{{ args }}{% endraw %}
 
 # Format Markdown files
 format-markdown *args:
-  rumdl fmt {{ if args == "" { "." } else { args } }}
+    rumdl fmt {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Fix spelling
-format-spelling *args:
-  codespell -w {{ if args == "" { "." } else { args } }}
+# --- Fix ---
 
 # Fix code issues
 fix: fix-config fix-docs
 
 # Fix configuration files
-fix-config:
-  biome check --write .
+fix-config *args:
+    biome check --write {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Fix documentation
 fix-docs *args:
-  just fix-markdown {{ args }}
+    just fix-markdown {% raw %}{{ args }}{% endraw %}
 
 # Fix Markdown files
 fix-markdown *args:
-  rumdl check --fix {{ if args == "" { "." } else { args } }}
+    rumdl check --fix {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
+
+# --- Lint ---
 
 # Run all linters
 lint: lint-docs lint-config lint-spelling
@@ -51,60 +56,68 @@ lint-config: lint-json lint-yaml
 
 # Lint documentation
 lint-docs *args:
-  just lint-markdown {{ args }}
-  just lint-prose {{ args }}
+    just lint-markdown {% raw %}{{ args }}{% endraw %}
+    just lint-prose {% raw %}{{ args }}{% endraw %}
 
-# Lint JSON/JS/TS files
-lint-json:
-  biome check --files-ignore-unknown=true .
+# Lint JSON files
+lint-json *args:
+    biome check --files-ignore-unknown=true {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Lint Markdown files
 lint-markdown *args:
-  rumdl check {{ if args == "" { "." } else { args } }}
+    rumdl check {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Lint prose in Markdown files
 lint-prose *args:
-  vale {{ if args == "" { "README.md" } else { args } }}
+    vale --glob='!{.claude/worktrees/**,.vale/**,tmp/**,CHANGELOG.md}' {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Check spelling
-lint-spelling:
-  codespell
+lint-spelling *args:
+    cspell {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Lint YAML files
-lint-yaml:
-  yamllint --strict .
+lint-yaml *args:
+    yamllint --strict {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
+
+# --- Quality gates ---
+
+# Check that everything is ready for commit
+check: format fix lint
+
+# --- Utilities ---
 
 # Install dependencies
 install:
-  vale sync
+    vale sync
 
 # Run pre-commit hooks on changed files
 prek:
-  prek
+    prek
 
 # Run pre-commit hooks on all files
 prek-all:
-  prek run --all-files
+    prek run --all-files
 
 # Install pre-commit hooks
 prek-install:
-  prek install
+    prek install -t commit-msg -t pre-commit
 
 # Sync Vale styles and dictionaries
 vale-sync:
-  vale sync
+    vale sync
 
 # Generate full changelog
 generate-changelog:
-  cog changelog | { echo "# Changelog"; cat; } | rumdl check -d MD024 --fix --stdin > CHANGELOG.md
+    cog changelog | { echo "# Changelog"; cat; } | rumdl check -d MD024 --fix --stdin > CHANGELOG.md
 
 # Preview changelog since last release
 preview-changelog:
-  cog changelog --at $(git describe --tags)..HEAD -t full_hash | rumdl check -d MD041 --fix --stdin
+    cog changelog --at $(git describe --tags)..HEAD -t full_hash | rumdl check -d MD041 --fix --stdin
 
+{% raw %}
 # Generate release notes
 [script]
 generate-release-notes version="":
-  v=$([[ -n "{{ version }}" ]] && echo "v{{ version }}" || echo "..$(git rev-parse HEAD)" )
-  cog changelog --at $v -t full_hash | rumdl check -d MD024,MD041 --isolated --fix --stdin
-{%- endraw %}
+    v=$([[ -n "{{ version }}" ]] && echo "v{{ version }}" || echo "..$(git rev-parse HEAD)" )
+    cog changelog --at $v -t full_hash | rumdl check -d MD024,MD041 --isolated --fix --stdin
+{% endraw %}

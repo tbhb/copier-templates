@@ -1,0 +1,20 @@
+{
+  "language": "en",
+  "ignorePaths": [
+    "**/*.d.ts",
+    "**/*.log",
+    ".claude/worktrees/**/*",
+    ".rumdl_cache/**/*",
+    ".vale/**/*",
+    "dist/**/*",
+    "node_modules/**/*"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "{{ project_slug }}",
+      "path": "./{{ project_slug }}-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["{{ project_slug }}"]
+}

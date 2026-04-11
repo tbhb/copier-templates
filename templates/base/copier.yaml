@@ -32,5 +32,5 @@ project_description:
 _tasks:
   - "git init"
   - "vale sync"
-  - "prek install"
+  - "prek install -t commit-msg -t pre-commit"
   - "git add ."

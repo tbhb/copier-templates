@@ -1,22 +1,49 @@
-{% raw %}set shell := ['bash', '-euxo', 'pipefail', '-c']
-set unstable
-set positional-arguments
+{% raw %}set unstable := true
+set positional-arguments := true
 
-project := "{{ project_slug }}"
+# Default recipe
+default: check
 
-{% endraw %}{{ "{% raw %}" }}
-{% raw %}# List available recipes
-default:
-  @just --list
+# --- Setup ---
+
+# Set up development environment
+setup: prek-install vale-sync
+
+# --- Format ---
 
 # Format code
-format *args:
-  uvx codespell -w {{ if args == "" { "." } else { args } }}
-  biome format --write .
+format: format-config format-docs
+
+# Format configuration files
+format-config *args:
+    biome format --write {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# Format documentation
+format-docs *args:
+    just format-markdown {% endraw %}{{ "{% raw %}" }}{% raw %}{{ args }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# Format Markdown files
+format-markdown *args:
+    rumdl fmt {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# --- Fix ---
 
 # Fix code issues
-fix:
-  biome check --write .
+fix: fix-config fix-docs
+
+# Fix configuration files
+fix-config *args:
+    biome check --write {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# Fix documentation
+fix-docs *args:
+    just fix-markdown {% endraw %}{{ "{% raw %}" }}{% raw %}{{ args }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# Fix Markdown files
+fix-markdown *args:
+    rumdl check --fix {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# --- Lint ---
 
 # Run all linters
 lint: lint-docs lint-config lint-spelling
@@ -26,46 +53,53 @@ lint-config: lint-json lint-yaml
 
 # Lint documentation
 lint-docs *args:
-  just lint-markdown {{ args }}
-  just lint-prose {{ args }}
+    just lint-markdown {% endraw %}{{ "{% raw %}" }}{% raw %}{{ args }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+    just lint-prose {% endraw %}{{ "{% raw %}" }}{% raw %}{{ args }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
 
-# Lint JSON/JS/TS files
-lint-json:
-  biome check --files-ignore-unknown=true .
+# Lint JSON files
+lint-json *args:
+    biome check --files-ignore-unknown=true {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
 
 # Lint Markdown files
 lint-markdown *args:
-  uvx rumdl check {{ if args == "" { "." } else { args } }}
+    rumdl check {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
 
 # Lint prose in Markdown files
 lint-prose *args:
-  uvx vale {{ if args == "" { "README.md" } else { args } }}
+    vale {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "README.md" } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
 
 # Check spelling
-lint-spelling:
-  uvx codespell
+lint-spelling *args:
+    cspell {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
 
 # Lint YAML files
-lint-yaml:
-  yamllint --strict .
+lint-yaml *args:
+    yamllint --strict {% endraw %}{{ "{% raw %}" }}{% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}{{ "{% endraw %}" }}{% raw %}
+
+# --- Quality gates ---
+
+# Check that everything is ready for commit
+check: format fix lint
+
+# --- Utilities ---
 
 # Install dependencies
 install:
-  uvx vale sync
+    vale sync
 
 # Run pre-commit hooks on changed files
 prek:
-  uvx prek
+    prek
 
 # Run pre-commit hooks on all files
 prek-all:
-  uvx prek run --all-files
+    prek run --all-files
 
 # Install pre-commit hooks
 prek-install:
-  uvx prek install
+    prek install -t commit-msg -t pre-commit
 
 # Sync Vale styles and dictionaries
 vale-sync:
-  uvx vale sync
-{% endraw %}{{ "{% endraw %}" }}
+    vale sync
+{% endraw %}

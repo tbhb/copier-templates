@@ -38,6 +38,6 @@ _tasks:
   - "touch .vale/config/vocabularies/{{ project_slug }}/accept.txt"
   - "touch .vale/config/vocabularies/{{ project_slug }}/reject.txt"
 {% endraw %}
-  - "uvx vale sync"
-  - "uvx prek install"
+  - "vale sync"
+  - "prek install -t commit-msg -t pre-commit"
   - "git add ."

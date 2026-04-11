@@ -1,5 +1,5 @@
 ---
-default_stages: [pre-commit, pre-push]
+default_stages: [commit-msg, pre-commit, pre-push]
 
 repos:
   - repo: builtin
@@ -14,46 +14,63 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7 # v1.37.1
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530 # v1.38.0
     hooks:
       - id: yamllint
         name: Check YAML files with yamllint
         entry: yamllint -c .yamllint.yaml --strict
         types: [yaml]
 
-  - repo: https://github.com/codespell-project/codespell
-    rev: 63c8f8312b7559622c0d82815639671ae42132ac # v2.4.1
+  - repo: https://github.com/errata-ai/vale
+    rev: f544f4923eb1c7d322c18e35f96333ef8ac29efa # v3.13.1
     hooks:
-      - id: codespell
-        exclude: (^\.)
+      - id: vale
+        exclude: ^CHANGELOG\.md$
+      - id: vale
+        name: vale (commit message)
+        stages: [commit-msg]
+        args: [--ext=.md]
+
+  - repo: https://github.com/rvben/rumdl-pre-commit
+    rev: a1a7657643f1f734d93e854bdb216da71c4356b9 # v0.1.62
+    hooks:
+      - id: rumdl-fmt
+      - id: rumdl
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: aad66557af3b56ba6d4d69cd1b6cba87cef50cbb # v0.14.3
+    rev: aca6d4c8045a504e2812ea4bedff1d0a09e437bc # v0.15.8
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/DetachHead/basedpyright-prek-mirror
-    rev: 7eb3855a1790d8fc457b95773e11cf045ef82d65 # 1.32.1
-    hooks:
-      - id: basedpyright
-
-  - repo: https://github.com/rhysd/actionlint
-    rev: e7d448ef7507c20fc4c88a95d0c448b848cd6127 # v1.7.8
-    hooks:
-      - id: actionlint
-
-  - repo: https://github.com/errata-ai/vale
-    rev: 27593b0e0e7eb8f0c2b7fae0d93fa1cfaabceb2f # v3.13.0
-    hooks:
-      - id: vale
-
   - repo: local
     hooks:
-      - id: local-biome-check
+      - id: biome-check
         name: biome check
         entry: biome check --write --files-ignore-unknown=true --no-errors-on-unmatched
         language: system
         types: [text]
         files: "\\.(jsx?|tsx?|c(js|ts)|m(js|ts)|d\\.(ts|cts|mts)|jsonc?|css|svelte|vue|astro|graphql|gql)$"
+      - id: ty
+        name: ty check
+        entry: uv run ty check
+        language: system
+        types: [python]
+      - id: cog-verify
+        name: conventional commits
+        entry: cog verify --file
+        language: system
+        stages: [commit-msg]
+        always_run: true
+      - id: cspell
+        name: cspell
+        entry: cspell --config cspell.json --no-summary --no-progress --no-must-find-files
+        language: system
+        types: [text]
+      - id: cspell-commit
+        name: cspell-commit
+        entry: cspell --config cspell.json --no-summary --no-progress --language-id commit-msg
+        language: system
+        stages: [commit-msg]
+        types: [text]

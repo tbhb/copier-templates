@@ -1,348 +1,371 @@
-set shell := ['uv', 'run', '--frozen', 'bash', '-euxo', 'pipefail', '-c']
-set unstable
-set positional-arguments
+set unstable := true
+set positional-arguments := true
 
-project := "{{ project_slug }}"
-package := "{{ project_slug }}"
-module := "{{ project_module }}"
-test_pypi_index := "https://test.pypi.org/legacy/"
+# Default recipe
+default: check
 
-{% raw %}
-# List available recipes
-default:
-  @just --list
+# --- Setup ---
 
-# Run benchmarks
-benchmark *args:
-  pytest -m benchmark --codspeed "$@"
+# Set up development environment
+setup: prek-install vale-sync
 
-# Build distribution packages
-build: clean-python
-  uv build --no-sources
+# Set up a worktree
+setup-worktree: vale-sync
 
-# Build the latest documentation
-build-docs: clean-docs
-  MKDOCS_ENV=latest uv run --group docs mkdocs build --strict
-
-# Build the documentation for PR preview
-[script]
-build-docs-pr number: clean-docs
-  rm -f mkdocs.pr.yml
-  cat << EOF >> mkdocs.pr.yml
-  INHERIT: ./mkdocs.yml
-  site_name: {{project}} Documentation (PR-{{number}})
-  site_url: https://{{number}}-{{project}}-preview.tbhb.workers.dev/
-  EOF
-  uv run --group docs mkdocs build --strict
-  echo "User-Agent: *\nDisallow: /" > site/robots.txt
-
-# Build distribution packages with SBOM
-build-release: build
-  #!/usr/bin/env bash
-  uv run --frozen --isolated --group release cyclonedx-py environment --of json -o dist/sbom.cdx.json
-
-# Clean build artifacts
-clean: clean-python clean-docs
-
-# Clean documentation build artifacts
-clean-docs:
-  rm -rf site
-
-# Clean Python build artifacts
-clean-python:
-  #!/usr/bin/env bash
-  rm -rf dist
-  find . -type d -name __pycache__ -exec rm -rf {} +
-  find . -type d -name .pytest_cache -exec rm -rf {} +
-  find . -type d -name .ruff_cache -exec rm -rf {} +
-
-# Deploy latest documentation
-deploy-docs: build-docs
-  uv run --group docs workers-py deploy --env ""
-
-# Deploy documentation preview
-deploy-docs-pr number: (build-docs-pr number)
-  uv run --group docs workers-py versions upload --env preview --preview-alias pr-{{number}}
-
-# Develop the documentation site locally
-dev-docs:
-  uv run --isolated --group docs mkdocs serve --livereload --dev-addr 127.0.0.1:8000
+# --- Format ---
 
 # Format code
-format: format-spelling format-python format-docs
+format: format-config format-docs format-python
+
+# Format configuration files
+format-config *args:
+    biome format --write {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Format documentation
 format-docs *args:
-  just format-markdown {{ args }}
+    just format-markdown {% raw %}{{ args }}{% endraw %}
 
 # Format Markdown files
 format-markdown *args:
-  uvx rumdl fmt {{ if args == "" { "." } else { args } }}
+    rumdl fmt {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Format Python code
+# Format Python files
 format-python *args:
-  ruff format {{ if args == "" { "." } else { args } }}
+    uv run ruff format {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Fix spelling
-format-spelling *args:
-  uvx codespell -w {{ if args == "" { "." } else { args } }}
+# --- Fix ---
 
 # Fix code issues
-fix: fix-python fix-docs
+fix: fix-config fix-docs fix-python
+
+# Fix configuration files
+fix-config *args:
+    biome check --write {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Fix documentation
 fix-docs *args:
-  just fix-markdown {{ args }}
+    just fix-markdown {% raw %}{{ args }}{% endraw %}
 
 # Fix Markdown files
 fix-markdown *args:
-  uvx rumdl check --fix {{ if args == "" { "." } else { args } }}
+    rumdl check --fix {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Fix Python code
+# Fix Python files
 fix-python *args:
-  ruff format {{ if args == "" { "." } else { args } }}
-  ruff check --fix {{ if args == "" { "." } else { args } }}
+    uv run ruff check --fix {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Fix Python code including unsafe fixes
-fix-unsafe *args:
-  ruff format {{ if args == "" { "." } else { args } }}
-  ruff check --fix --unsafe-fixes {{ if args == "" { "." } else { args } }}
+# --- Lint ---
 
 # Run all linters
-lint: lint-python lint-docs lint-config lint-shell lint-spelling
+lint: lint-docs lint-config lint-python lint-spelling
 
 # Lint configuration files
 lint-config: lint-json lint-yaml
 
-# Lint shell scripts
-lint-shell:
-  #!/usr/bin/env bash
-  shellcheck .devcontainer/*.sh
-
 # Lint documentation
 lint-docs *args:
-  just lint-markdown {{ args }}
-  just lint-prose {{ args }}
+    just lint-markdown {% raw %}{{ args }}{% endraw %}
+    just lint-prose {% raw %}{{ args }}{% endraw %}
 
-# Lint JSON/JS/TS files
-lint-json:
-  biome check --files-ignore-unknown=true .
+# Lint JSON files
+lint-json *args:
+    biome check --files-ignore-unknown=true {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Lint Markdown files
 lint-markdown *args:
-  uvx rumdl check {{ if args == "" { "." } else { args } }}
+    rumdl check {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Lint Python code
+# Lint prose in Markdown files and Python docstrings
+lint-prose *args:
+    vale --glob='!{.claude/worktrees/**,.pytest_cache/**,.vale/**,.venv/**,tmp/**,CHANGELOG.md}' {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
+
+# Lint Python files
 lint-python *args: (lint-python-style args) (lint-python-types args) (lint-python-complexity args) lint-python-imports
-
-# Lint Python complexity
-lint-python-complexity *args:
-  complexipy "$@"
-
-# Lint Python imports
-lint-python-imports:
-  lint-imports
-  ruff check --select I .
 
 # Lint Python style
 lint-python-style *args:
-  ruff check {{ if args == "" { "." } else { args } }}
-  ruff format --check {{ if args == "" { "." } else { args } }}
+    uv run ruff check {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
+    uv run ruff format --check {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Check types
+# Lint Python types
 lint-python-types *args:
-  ty check "$@"
+    uv run ty check {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Lint prose in Markdown files
-lint-prose *args:
-  uvx vale {{ if args == "" { "docs/**/*.md CODE_OF_CONDUCT.md CONTRIBUTING.md README.md SECURITY.md" } else { args } }}
+# Lint Python complexity
+lint-python-complexity *args:
+    uv run complexipy {% raw %}{{ if args == "" { "src tests" } else { args } }}{% endraw %}
+
+# Lint Python imports
+lint-python-imports:
+    uv run lint-imports
 
 # Check spelling
-lint-spelling:
-  uvx codespell
+lint-spelling *args:
+    cspell {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
 # Lint YAML files
-lint-yaml:
-  uvx yamllint --strict .
+lint-yaml *args:
+    yamllint --strict {% raw %}{{ if args == "" { "." } else { args } }}{% endraw %}
 
-# Install all dependencies
-install: install-python
+# --- Build ---
 
-# Install only Python dependencies
-install-python:
-  #!/usr/bin/env bash
-  uv sync --frozen
+# Build distribution packages
+build:
+    uv build --no-sources
+{% if include_docs %}
+# Build the latest documentation
+build-docs: clean-docs
+    MKDOCS_ENV=latest uv run --group docs mkdocs build --strict
 
-# Run pre-commit hooks on changed files
-prek:
-  uvx prek
-
-# Run pre-commit hooks on all files
-prek-all:
-  uvx prek run --all-files
-
-# Install pre-commit hooks
-prek-install:
-  uvx prek install
-
-# Publish to TestPyPI (requires OIDC token in CI or UV_PUBLISH_TOKEN)
-publish-testpypi:
-  uv publish --publish-url {{test_pypi_index}}
-
-# Publish to PyPI (requires OIDC token in CI or UV_PUBLISH_TOKEN)
-publish-pypi:
-  uv publish
-
-# Run command
-run *args:
-  "$@"
-
-# Run Python
-run-python *args:
-  python "$@"
-
-# Generate SBOM for current environment
-sbom output="sbom.cdx.json":
-  uv run --isolated --group release cyclonedx-py environment --of json -o {{output}}
-
-# Set development version (appends .devN)
+# Build the documentation for PR preview
 [script]
-set-dev-version number:
-  base_version="$(uv version --package {{package}} | awk '{print $2}')"
-  version="${base_version}.dev{{number}}"
-  uv version --package {{package}} "${version}"
+build-docs-pr number: clean-docs
+    rm -f mkdocs.pr.yml
+    cat << EOF >> mkdocs.pr.yml
+    INHERIT: ./mkdocs.yml
+    site_name: {{ project_name }} Documentation (PR-{% raw %}{{number}}{% endraw %})
+    site_url: https://{% raw %}{{number}}{% endraw %}-{{ project_slug }}-preview.tbhb.workers.dev/
+    EOF
+    uv run --group docs mkdocs build --strict
+    echo "User-Agent: *\nDisallow: /" > site/robots.txt
+{% endif %}
+# Build distribution packages with SBOM
+build-release: build
+    uv run --frozen --isolated --group release cyclonedx-py environment --of json -o dist/sbom.cdx.json
+
+# --- Test ---
 
 # Run tests (excludes benchmarks and slow tests by default)
 test *args:
-  pytest "$@"
+    uv run pytest "$@"
 
 # Run all tests
 test-all *args:
-  pytest -m "" "$@"
+    uv run pytest -m "" "$@"
+
+# Run benchmarks (CodSpeed CI mode)
+benchmark *args:
+    uv run pytest -m benchmark --codspeed "$@"
+
+# Run timing benchmarks locally (excludes memory-only tests)
+benchmark-timing *args:
+    uv run pytest tests/benchmarks/ -m "benchmark or slow" -k "not test_memory" --no-header -v "$@"
+
+# Run memory benchmarks with memray
+benchmark-memory *args:
+    uv run pytest tests/benchmarks/ -m "benchmark or slow" -k "test_memory" --no-header -v --memray "$@"
 
 # Run tests with coverage
 test-coverage *args:
-  pytest -m "not benchmark" --cov={{module}} --cov-branch --cov-fail-under=100 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=json "$@"
+    uv run pytest -m "not benchmark and not property" --cov={{ project_module }} --cov-branch --cov-fail-under=100 --cov-report=term-missing:skip-covered --cov-report=xml --cov-report=json "$@"
 
-# RUn documentation tests
+# Run property tests (Hypothesis-based invariant verification)
+test-property *args:
+    uv run pytest -m property "$@"
+
+# Run documentation tests
 test-examples *args:
-  pytest -m example "$@"
+    uv run pytest -m example "$@"
 
 # Run only failed tests from last run
 test-failed *args: (test args "--lf")
 
 # Run slow tests
 test-slow *args:
-  pytest -m "slow" "$@"
+    uv run pytest -m "slow" "$@"
 
-# Update documentation examples (refresh output blocks)
-update-examples *args:
-  pytest -m example --update-examples "$@"
+# --- Quality gates ---
+
+# Check that everything is ready for commit
+check: format fix lint test
+
+# --- Utilities ---
+
+# Run pre-commit hooks on changed files
+prek:
+    prek
+
+# Run pre-commit hooks on all files
+prek-all:
+    prek run --all-files
+
+# Install pre-commit hooks
+prek-install:
+    prek install -t commit-msg -t pre-commit
 
 # Sync Vale styles and dictionaries
 vale-sync:
-  uvx vale sync
+    vale sync
+
+# Generate full changelog
+generate-changelog:
+    cog changelog | { echo "# Changelog"; cat; } | rumdl check -d MD024 --fix --stdin > CHANGELOG.md
+
+# Preview changelog since last release
+preview-changelog:
+    cog changelog --at $(git describe --tags)..HEAD -t full_hash | rumdl check -d MD041 --fix --stdin
+
+{% raw %}
+# Generate release notes
+[script]
+generate-release-notes version="":
+    v=$([[ -n "{{ version }}" ]] && echo "v{{ version }}" || echo "..$(git rev-parse HEAD)" )
+    cog changelog --at $v -t full_hash | rumdl check -d MD024,MD041 --isolated --fix --stdin
+{% endraw %}
+
+# Install all dependencies
+install:
+    uv sync --all-groups
+{% if include_docs %}
+# Clean build artifacts
+clean: clean-python clean-docs
+
+# Clean documentation build artifacts
+clean-docs:
+    rm -rf site
+
+{% else %}
+# Clean build artifacts
+clean: clean-python
+
+{% endif %}
+# Clean Python build artifacts
+clean-python:
+    rm -rf dist
+    find . -type d -name __pycache__ -exec rm -rf {} +
+    find . -type d -name .pytest_cache -exec rm -rf {} +
+    find . -type d -name .ruff_cache -exec rm -rf {} +
+{% if include_docs %}
+# Deploy latest documentation
+deploy-docs: build-docs
+    uv run --group docs workers-py deploy --env ""
+
+# Deploy documentation preview
+deploy-docs-pr number: (build-docs-pr number)
+    uv run --group docs workers-py versions upload --env preview --preview-alias pr-{% raw %}{{number}}{% endraw %}
+
+# Develop the documentation site locally
+dev-docs:
+    uv run --isolated --group docs mkdocs serve --livereload --dev-addr 127.0.0.1:8000
+{% endif %}
+# Publish to TestPyPI
+publish-testpypi:
+    uv publish --publish-url https://test.pypi.org/legacy/
+
+# Publish to PyPI
+publish-pypi:
+    uv publish
+
+# Generate SBOM for current environment
+sbom output="sbom.cdx.json":
+    uv run --isolated --group release cyclonedx-py environment --of json -o {% raw %}{{ output }}{% endraw %}
+
+{% raw %}
+# Set development version (appends .devN)
+[script]
+set-dev-version number:
+    base_version="$(uv version --package {% endraw %}{{ project_slug }}{% raw %} | awk '{print $2}')"
+    version="${base_version}.dev{{ number }}"
+    uv version --package {% endraw %}{{ project_slug }}{% raw %} "${version}"
 
 # Show the current version
 [script]
 version:
-  uv version --package {{package}} | awk '{print $2}'
+    uv version --package {% endraw %}{{ project_slug }}{% raw %} | awk '{print $2}'
 
-# Verify a PyPi release (with retries for index propagation)
+# Verify a PyPI release (with retries for index propagation)
 [script]
 verify-pypi version:
-  tmp_dir="/tmp/{{package}}-verify-pypi/venv"
-  rm -fr "${tmp_dir}"
-  mkdir -p "${tmp_dir}"
-  uv venv --directory "${tmp_dir}" --python 3.10 --no-project --no-cache
-  for i in 1 2 3 4 5; do
-    echo "Attempt $i: Installing {{package}}=={{version}} from PyPI..."
-    if uv pip install --directory "${tmp_dir}" --no-cache --strict "{{package}}=={{version}}"; then
-      break
-    fi
-    if [ "$i" -lt 5 ]; then
-      echo "Package not yet available, waiting 10 seconds..."
-      sleep 10
-    else
-      echo "Failed to install after 5 attempts"
-      exit 1
-    fi
-  done
-  uv run --directory "${tmp_dir}" --no-project python -c "import {{module}}; print({{module}}.__version__)"
+    tmp_dir="/tmp/{% endraw %}{{ project_slug }}{% raw %}-verify-pypi/venv"
+    rm -fr "${tmp_dir}"
+    mkdir -p "${tmp_dir}"
+    uv venv --directory "${tmp_dir}" --python 3.10 --no-project --no-cache
+    for i in 1 2 3 4 5; do
+      echo "Attempt $i: Installing {% endraw %}{{ project_slug }}{% raw %}=={{ version }} from PyPI..."
+      if uv pip install --directory "${tmp_dir}" --no-cache --strict "{% endraw %}{{ project_slug }}{% raw %}=={{ version }}"; then
+        break
+      fi
+      if [ "$i" -lt 5 ]; then
+        echo "Package not yet available, waiting 10 seconds..."
+        sleep 10
+      else
+        echo "Failed to install after 5 attempts"
+        exit 1
+      fi
+    done
+    uv run --directory "${tmp_dir}" --no-project python -c "import {% endraw %}{{ project_module }}{% raw %}; print({% endraw %}{{ project_module }}{% raw %}.__version__)"
 
-# Verify a TestPyPi release (with retries for index propagation)
+# Verify a TestPyPI release (with retries for index propagation)
 [script]
 verify-testpypi version:
-  tmp_dir="/tmp/{{package}}-verify-testpypi/venv"
-  rm -fr "${tmp_dir}"
-  mkdir -p "${tmp_dir}"
-  uv venv --directory "${tmp_dir}" --python 3.10 --no-project --no-cache --default-index "https://test.pypi.org/simple/" --extra-index-url "https://pypi.org/simple/"
-  for i in 1 2 3 4 5; do
-    echo "Attempt $i: Installing {{package}}=={{version}} from TestPyPI..."
-    if uv pip install --directory "${tmp_dir}" --no-cache --strict --index-strategy unsafe-best-match --default-index "https://test.pypi.org/simple/" --extra-index-url "https://pypi.org/simple/" "{{package}}=={{version}}"; then
-      break
-    fi
-    if [ "$i" -lt 5 ]; then
-      echo "Package not yet available, waiting 10 seconds..."
-      sleep 10
-    else
-      echo "Failed to install after 5 attempts"
-      exit 1
-    fi
-  done
-  uv run --directory "${tmp_dir}" --no-project python -c "import {{module}}; print({{module}}.__version__)"
+    tmp_dir="/tmp/{% endraw %}{{ project_slug }}{% raw %}-verify-testpypi/venv"
+    rm -fr "${tmp_dir}"
+    mkdir -p "${tmp_dir}"
+    uv venv --directory "${tmp_dir}" --python 3.10 --no-project --no-cache --default-index "https://test.pypi.org/simple/" --extra-index-url "https://pypi.org/simple/"
+    for i in 1 2 3 4 5; do
+      echo "Attempt $i: Installing {% endraw %}{{ project_slug }}{% raw %}=={{ version }} from TestPyPI..."
+      if uv pip install --directory "${tmp_dir}" --no-cache --strict --index-strategy unsafe-best-match --default-index "https://test.pypi.org/simple/" --extra-index-url "https://pypi.org/simple/" "{% endraw %}{{ project_slug }}{% raw %}=={{ version }}"; then
+        break
+      fi
+      if [ "$i" -lt 5 ]; then
+        echo "Package not yet available, waiting 10 seconds..."
+        sleep 10
+      else
+        echo "Failed to install after 5 attempts"
+        exit 1
+      fi
+    done
+    uv run --directory "${tmp_dir}" --no-project python -c "import {% endraw %}{{ project_module }}{% raw %}; print({% endraw %}{{ project_module }}{% raw %}.__version__)"
+{% endraw %}
 
-# ------------------------------------------------------------------------------
-# Devcontainer management
-# ------------------------------------------------------------------------------
+# --- Devcontainer management ---
 
 # Build the devcontainer
 dc-build:
-  #!/usr/bin/env bash
-  devcontainer build --workspace-folder .
+    #!/usr/bin/env bash
+    devcontainer build --workspace-folder .
 
 # Start the devcontainer
 dc-up:
-  #!/usr/bin/env bash
-  devcontainer up --workspace-folder .
+    #!/usr/bin/env bash
+    devcontainer up --workspace-folder .
 
 # Open a shell in the devcontainer
 dc-shell:
-  #!/usr/bin/env bash
-  devcontainer exec --workspace-folder . zsh
+    #!/usr/bin/env bash
+    devcontainer exec --workspace-folder . zsh
 
 # Rebuild the devcontainer (no cache)
 dc-rebuild:
-  #!/usr/bin/env bash
-  devcontainer build --workspace-folder . --no-cache
-  devcontainer up --workspace-folder .
+    #!/usr/bin/env bash
+    devcontainer build --workspace-folder . --no-cache
+    devcontainer up --workspace-folder .
 
 # Stop the devcontainer
 dc-down:
-  #!/usr/bin/env bash
-  container_id=$(docker ps -q --filter "label=devcontainer.local_folder=$(pwd)")
-  if [ -n "$container_id" ]; then
-    docker stop "$container_id"
-  fi
+    #!/usr/bin/env bash
+    container_id=$(docker ps -q --filter "label=devcontainer.local_folder=$(pwd)")
+    if [ -n "$container_id" ]; then
+      docker stop "$container_id"
+    fi
 
 # Restart the devcontainer
 dc-restart:
-  #!/usr/bin/env bash
-  just dc-down
-  devcontainer up --workspace-folder .
+    #!/usr/bin/env bash
+    just dc-down
+    devcontainer up --workspace-folder .
 
 # Reset the devcontainer (delete volumes and rebuild)
 dc-reset:
-  #!/usr/bin/env bash
-  # Stop and remove container
-  container_id=$(docker ps -aq --filter "label=devcontainer.local_folder=$(pwd)")
-  if [ -n "$container_id" ]; then
-    docker stop "$container_id" 2>/dev/null || true
-    docker rm "$container_id" 2>/dev/null || true
-  fi
-  # Delete volumes
-  docker volume ls -q | grep {{project}} | xargs -r docker volume rm
-  # Rebuild
-  devcontainer build --workspace-folder . --no-cache
-  devcontainer up --workspace-folder .
-{% endraw %}
+    #!/usr/bin/env bash
+    # Stop and remove container
+    container_id=$(docker ps -aq --filter "label=devcontainer.local_folder=$(pwd)")
+    if [ -n "$container_id" ]; then
+      docker stop "$container_id" 2>/dev/null || true
+      docker rm "$container_id" 2>/dev/null || true
+    fi
+    # Delete volumes
+    docker volume ls -q | grep {{ project_slug }} | xargs -r docker volume rm
+    # Rebuild
+    devcontainer build --workspace-folder . --no-cache
+    devcontainer up --workspace-folder .
